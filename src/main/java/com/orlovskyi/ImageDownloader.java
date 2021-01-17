@@ -15,43 +15,46 @@ import java.util.*;
 public class ImageDownloader {
 
     private static final String URL = "https://zno.osvita.ua";
-    private int folder = 0;
+    private int i = 0;
 
     public void downloadImages() throws IOException {
-        Map<String, String> pageParameters = new HashMap<>();
-        pageParameters.put("class", "test-item");
-        pageParameters.put("tag", "a");
-        pageParameters.put("attribute", "href");
-        List<String> topicReferences = getReferences(URL+"/mathematics/", pageParameters);
-
-        pageParameters.put("class", "question");
-        pageParameters.put("tag", "img");
-        pageParameters.put("attribute", "src");
-        for (String topicReference : topicReferences){
-            List<String> imagesPath = getReferences(topicReference, pageParameters);
-            getImages(imagesPath);
+        Map<String, String> topicReferences = getTopicReferences(URL + "/mathematics/");
+        for (Map.Entry<String, String> entry : topicReferences.entrySet()) {
+            List<String> imagesPath = getReferences(entry.getKey());
+            getImages(imagesPath, entry.getValue());
         }
     }
 
-    private List<String> getReferences(String url, Map<String, String> pageParameters) throws IOException {
+    private List<String> getReferences(String url) throws IOException {
         Document doc = Jsoup.connect(url).get();
         List<String> references = new ArrayList<>();
-        Elements pageElements = doc.getElementsByClass(pageParameters.get("class")).select(pageParameters.get("tag"));
-        for (Element pageElement : pageElements){
-            references.add(URL+pageElement.attr(pageParameters.get("attribute")));
+        Elements pageElements = doc.getElementsByClass("question").select("img");
+        for (Element pageElement : pageElements) {
+            references.add(URL + pageElement.attr("src"));
         }
         return references;
     }
 
-    private void getImages(List<String> imagesPath){
-        int i = 0;
-        folder++;
-        File dir = new File(String.valueOf(folder));
-        dir.mkdir();
-        for (String imagePath : imagesPath){
+    private Map<String, String> getTopicReferences(String url) throws IOException {
+        Document doc = Jsoup.connect(url).get();
+        Map<String, String> yearForReference = new LinkedHashMap<>();
+        Elements pageElements = doc.getElementsByClass("test-item").select("a");
+        for (Element pageElement : pageElements) {
+            yearForReference.put(URL + pageElement.attr("href"), pageElement.childNode(1).childNode(0).toString());
+        }
+        return yearForReference;
+    }
+
+    private void getImages(List<String> imagesPath, String folderName) {
+        File dir = new File(folderName);
+        if (!dir.exists()) {
+            i=0;
+            dir.mkdir();
+        }
+        for (String imagePath : imagesPath) {
             i++;
             try (BufferedInputStream in = new BufferedInputStream(new URL(imagePath).openStream());
-                 FileOutputStream fileOutputStream = new FileOutputStream(folder+"/"+i+".png")) {
+                 FileOutputStream fileOutputStream = new FileOutputStream(folderName + "/" + i + ".png")) {
                 byte[] dataBuffer = new byte[1024];
                 int bytesRead;
                 while ((bytesRead = in.read(dataBuffer, 0, 1024)) != -1) {
