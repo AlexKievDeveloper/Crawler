@@ -1,3 +1,5 @@
+package com.orlovskyi;
+
 import com.orlovskyi.ImageDownloader;
 
 import java.io.IOException;

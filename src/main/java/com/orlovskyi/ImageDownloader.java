@@ -1,5 +1,6 @@
 package com.orlovskyi;
 
+import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -12,6 +13,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.*;
 
+@Slf4j
 public class ImageDownloader {
 
     private static final String URL = "https://zno.osvita.ua";
@@ -21,17 +23,20 @@ public class ImageDownloader {
         Map<String, String> topicReferences = getTopicReferences(URL + "/mathematics/");
         for (Map.Entry<String, String> entry : topicReferences.entrySet()) {
             List<String> imagesPath = getReferences(entry.getKey());
+            log.info("Entry: {}", entry );
             getImages(imagesPath, entry.getValue());
         }
     }
 
     private List<String> getReferences(String url) throws IOException {
         Document doc = Jsoup.connect(url).get();
+        /*log.info("Document: {}", doc);*/
         List<String> references = new ArrayList<>();
         Elements pageElements = doc.getElementsByClass("question").select("img");
         for (Element pageElement : pageElements) {
             references.add(URL + pageElement.attr("src"));
         }
+        log.info("References list: {}", references);
         return references;
     }
 
